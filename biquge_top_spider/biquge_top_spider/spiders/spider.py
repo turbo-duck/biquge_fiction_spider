@@ -10,7 +10,7 @@ class SpiderSpider(scrapy.Spider):
     # start_urls = ["https://spider.com"]
 
     def start_requests(self):
-        for page in range(300, 500):
+        for page in range(1, 1392):
             url = f"https://www.xbiqugew.com/top/allvisit/{page}.html"
             print(f"url: {url}")
             yield scrapy.Request(
