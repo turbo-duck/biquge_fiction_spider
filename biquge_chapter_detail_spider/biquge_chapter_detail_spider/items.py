@@ -9,4 +9,5 @@ import scrapy
 class BiqugeChapterDetailSpiderItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    chapter_code = scrapy.Field()
+    chapter_content = scrapy.Field()

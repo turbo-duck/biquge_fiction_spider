@@ -5,6 +5,7 @@ import sqlite3
 import re
 import json
 from urllib import parse
+from biquge_chapter_detail_spider.items import BiqugeChapterDetailSpiderItem
 
 
 class SpiderSpider(scrapy.Spider):
@@ -57,9 +58,9 @@ class SpiderSpider(scrapy.Spider):
             time.sleep(5)
             self.connect_db()
 
-    def extract_last_number(self, text):
+    def extract_last_number_html(self, text):
         # 使用正则表达式查找所有的数字
-        numbers = re.findall(r'.*?/(\d+)/', text)
+        numbers = re.findall(r'.*?/(\d+).html', text)
         # print(numbers)
         if numbers:
             # 返回最后一个数字
@@ -91,15 +92,16 @@ class SpiderSpider(scrapy.Spider):
             if url is None or url == "":
                 self.ack(delivery_tag)
                 continue
-            fiction_code = self.extract_last_number(url)
+            chapter_code = self.extract_last_number_html(url)
+            # print(chapter_code)
             # 检验数据库中是否有数据 有则跳过
-            sql = "SELECT COUNT(id) AS count FROM fiction_list WHERE fiction_code = ?"
+            sql = "SELECT COUNT(id) AS count FROM chapter_detail_list WHERE chapter_code = ?"
             try:
-                self.cursor.execute(sql, (fiction_code,))
+                self.cursor.execute(sql, (chapter_code,))
                 result = self.cursor.fetchone()
                 count = result[0]
                 if count > 0:
-                    print(f"SQL SELECT fiction_code: {fiction_code}, COUNT: {count}, ACK: {delivery_tag} 已跳过")
+                    print(f"SQL SELECT chapter_code: {chapter_code}, COUNT: {count}, ACK: {delivery_tag} 已跳过")
                     self.ack(delivery_tag)
                     continue
             except Exception as e:
@@ -114,13 +116,13 @@ class SpiderSpider(scrapy.Spider):
             yield self.callback(
                 url=url,
                 delivery_tag=delivery_tag,
-                fiction_code=fiction_code,
+                chapter_code=chapter_code,
             )
 
-    def callback(self, url, delivery_tag, fiction_code):
+    def callback(self, url, delivery_tag, chapter_code):
         meta = {
             "url": url,
-            "fiction_code": fiction_code,
+            "chapter_code": chapter_code,
             "delivery_tag": delivery_tag,
             "tcp_uuid": int(self.tcp_uuid),
         }
@@ -140,6 +142,19 @@ class SpiderSpider(scrapy.Spider):
 
     def parse_list(self, response):
         meta = response.meta
+        chapter_code = meta['chapter_code']
+        chapter_list = response.xpath(".//div[@id='content']/text()").extract()
+        chapter_json_list = []
+        for each_chapter in chapter_list:
+            each_chapter = re.sub(r'&nbsp;|\xa0', "", str(each_chapter))
+            chapter_json_list.append(each_chapter)
+        chapter_content = json.dumps(chapter_json_list, ensure_ascii=False)
+
+        item = BiqugeChapterDetailSpiderItem()
+        item['chapter_code'] = str(chapter_code)
+        item['chapter_content'] = str(chapter_content)
+        print(f"抓取 chapter_code: {chapter_code}")
+        yield item
 
         # ack
         delivery_tag = meta['delivery_tag']

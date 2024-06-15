@@ -6,6 +6,10 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BOT_NAME = "biquge_chapter_detail_spider"
 
@@ -20,12 +24,12 @@ LOG_LEVEL = "ERROR"
 ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+# CONCURRENT_REQUESTS = 1
 
 # Configure a delay for requests for the same website (default: 0)
 # See https://docs.scrapy.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 0.5
+DOWNLOAD_DELAY = 0.2
 # The download delay setting will honor only one of:
 #CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
@@ -64,7 +68,8 @@ DEFAULT_REQUEST_HEADERS = {
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    "biquge_chapter_detail_spider.pipelines.BiqugeChapterDetailSpiderPipeline": 300,
+    "biquge_chapter_detail_spider.pipelines.SQLitePipeline": 300,
+    # "biquge_chapter_detail_spider.pipelines.BiqugeChapterDetailSpiderPipeline": 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
@@ -92,3 +97,13 @@ ITEM_PIPELINES = {
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
+
+RABBITMQ_PARAMS = {
+    'queue': os.getenv('RABBITMQ_QUEUE', 'default_queue'),
+    'host': os.getenv('RABBITMQ_HOST', 'localhost'),
+    'port': os.getenv('RABBITMQ_PORT', '5672'),
+    'virtual_host': os.getenv('RABBITMQ_VHOST', '/'),
+    'username': os.getenv('RABBITMQ_USERNAME', 'guest'),
+    'password': os.getenv('RABBITMQ_PASSWORD', 'guest'),
+    'auto_ack': os.getenv('RABBITMQ_AUTO_ACK', False)
+}
